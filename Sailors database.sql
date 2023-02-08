@@ -65,7 +65,7 @@ SELECT * FROM sailors;
 SELECT * FROM boat;
 SELECT * FROM rservers;
 
-//Queries 
+--Queries 
 select color from boat where bid in (select bid from rservers where sid in (select sid from sailors where sname="Albert"));
 select distinct  sailors.sid from sailors,rservers where rating>=8 or (sailors.sid=rservers.sid and bid="B333");
 select sname from sailors where sid not in (select distinct sid from rservers where bid in (select bid from boat where bname like "%Storm%"))order by sname;
@@ -75,3 +75,59 @@ select boat.bid, AVG(age) from boat,sailors,rservers where sailors.age>=40 and b
 create view view1 as select sname,rating from sailors order by rating; select * from view1;
 create view view2 as select sname from sailors where sid in(select sid from rservers where s_date="2020-11-11");
 create view view3 as select sname,color from sailors,boat,rservers where sailors.sid=rservers.sid and boat.bid=rservers.bid and rating=10;
+
+--Trigger that prevents boats from being deleted If they have active reservations
+Delimiter //
+CREATE TRIGGER trigger1
+BEFORE DELETE ON Boat
+FOR EACH ROW
+BEGIN
+    DECLARE reservation_count INT;
+    Select COUNT(*) INTO reservation_count
+    FROM Rservers
+    WHERE Rservers.bid=OLD.bid;
+
+    IF reservation_count>0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT='Cannot delete a reserved boat';
+    END IF;
+END //
+
+Delimiter ;
+
+
+
+--Trigger that dosent allow reservation to a boat if sailor rating<3
+delimiter //
+create trigger trigger2
+before insert on rservers
+for each row
+begin
+      declare rat int;
+      select rating into rat
+      from sailors
+      where sailors.sid=new.sid;
+      if rat<3 then
+              SIGNAL SQLSTATE '45000'
+              SET MESSAGE_TEXT='cannot reserve a boat to sailor who has less than 3 rating';
+      end if;
+    end //
+ delimiter ;
+insert into sailors values ("S777","Walter",2,22);
+insert into rservers values ("S777","B444","2023-01-27");
+
+
+
+
+--Trigger that deletes all expired reservations
+DELIMITER //
+CREATE TRIGGER delete_expired_reservations
+AFTER INSERT ON Rservers
+FOR EACH ROW
+BEGIN
+    DELETE FROM Rservers
+    WHERE date < NOW() AND sid = NEW.sid AND bid = NEW.bid;
+END //
+DELIMITER ;
+
+
