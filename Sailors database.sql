@@ -69,7 +69,9 @@ SELECT * FROM rservers;
 select color from boat where bid in (select bid from rservers where sid in (select sid from sailors where sname="Albert"));
 select distinct  sailors.sid from sailors,rservers where rating>=8 or (sailors.sid=rservers.sid and bid="B333");
 select sname from sailors where sid not in (select distinct sid from rservers where bid in (select bid from boat where bname like "%Storm%"))order by sname;
-select sname from sailors where not exists ((select bid from boat) except (select bid from rservers where rservers.sid=sailors.sid));
+select sname from sailors where not exists ((select bid from boat) except (select bid from rservers where rservers.sid=sailors.sid)); 
+--or
+select sailors.sname from sailors join rservers where sailors.sid=rservers.sid group by sailors.sname,sailors.sid having count(rservers.bid)=(select count(*) from boat);
 select sname,age from sailors where (select max(age) from sailors)=age;
 select boat.bid, AVG(age) from boat,sailors,rservers where sailors.age>=40 and boat.bid=rservers.bid and sailors.sid=rservers.sid group by bid having count(distinct sailors.sid)>=5;
 create view view1 as select sname,rating from sailors order by rating; select * from view1;
