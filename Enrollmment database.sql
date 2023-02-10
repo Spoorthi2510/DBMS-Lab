@@ -93,9 +93,9 @@ SELECT c.c_id,t.bookISBN,t.book_title
 --2
 select distinct dept from course where c_id in (select c_id from book_adoption where bookISBN in (select bookISBN from textbook where publisher="pub1"));
 --3
-select sname from student s, enroll e, course c
-where s.regno=e.reg and e.c_id=c.c_id and c.cname="DBMS" and e.marks in (select max(marks) from enroll e1, course c1 where c1.cname="DBMS" and c1.c_id=e1.c_id);
-
+select s.sname from student s,enroll e,course c
+    -> where s.regno=e.reg and e.c_id=c.c_id and e.marks in
+    -> (select max(marks) from enroll where enroll.c_id in (select c_id from course where cname="DBMS"));
 --4 View
 create view view1 as
 select c.cname, e.marks from course c, enroll e
