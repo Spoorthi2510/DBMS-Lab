@@ -66,13 +66,23 @@ SELECT * FROM boat;
 SELECT * FROM rservers;
 
 --Queries 
+--1
 select color from boat where bid in (select bid from rservers where sid in (select sid from sailors where sname="Albert"));
+--2
 select distinct  sailors.sid from sailors,rservers where rating>=8 or (sailors.sid=rservers.sid and bid="B333");
+--or
+(select sid from sailors where rating>8) union (select sid from rservers where bid="B333");
+--3
 select sname from sailors where sid not in (select distinct sid from rservers where bid in (select bid from boat where bname like "%Storm%"))order by sname;
+--or
+ select sname from sailors where sid in(select sid from rservers where bid in(select bid from boat where bname like "%Storm")) order by sname;
+--4
 select sname from sailors where not exists ((select bid from boat) except (select bid from rservers where rservers.sid=sailors.sid)); 
 --or
 select sailors.sname from sailors join rservers where sailors.sid=rservers.sid group by sailors.sname,sailors.sid having count(rservers.bid)=(select count(*) from boat);
+--5
 select sname,age from sailors where (select max(age) from sailors)=age;
+--6
 select boat.bid, AVG(age) from boat,sailors,rservers where sailors.age>=40 and boat.bid=rservers.bid and sailors.sid=rservers.sid group by bid having count(distinct sailors.sid)>=5;
 create view view1 as select sname,rating from sailors order by rating; select * from view1;
 create view view2 as select sname from sailors where sid in(select sid from rservers where s_date="2020-11-11");
@@ -84,17 +94,11 @@ CREATE TRIGGER trigger1
 BEFORE DELETE ON Boat
 FOR EACH ROW
 BEGIN
-    DECLARE reservation_count INT;
-    Select COUNT(*) INTO reservation_count
-    FROM Rservers
-    WHERE Rservers.bid=OLD.bid;
-
-    IF reservation_count>0 THEN
+    IF (select count(*) from rservers where rservers.bid=old.bid)>0 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT='Cannot delete a reserved boat';
     END IF;
 END //
-
 Delimiter ;
 
 
