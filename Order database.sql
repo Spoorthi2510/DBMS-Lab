@@ -106,3 +106,11 @@ create view view1 as select oid,ship_date from shipment where wid="w2";
 create view view2 as select wid from shipment where oid in (select oid from orders where cust in (select cust from customer where cname="Kumar"));
 
 --Triggers
+DELIMITER $$
+create trigger UpdateOrderAmt
+after insert on order_item
+for each row
+BEGIN
+	update orders set order_amt=(new.qty*(select distinct unitprice from item NATURAL JOIN order_item where item_id=new.item_id)) where Orders.order_id=new.order_id;
+END; $$
+DELIMITER ;
