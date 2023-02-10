@@ -107,7 +107,7 @@ create trigger PreventEnrollment
 before insert on enroll
 for each row
 BEGIN
-	IF (new.marks<10) THEN
+	IF (new.marks<40) THEN
 		signal sqlstate '45000' set message_text='Marks below threshold';
 	END IF;
 END;
